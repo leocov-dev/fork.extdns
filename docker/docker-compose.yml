@@ -26,8 +26,3 @@ services:
         max-file: "5"
     labels:
       - "extdns.cf.nginx.hostname=example.com"
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "5"

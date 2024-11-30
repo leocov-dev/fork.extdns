@@ -1,0 +1,102 @@
+[build-system]
+requires = [
+    "hatchling",
+    "hatch-vcs",
+]
+build-backend = "hatchling.build"
+
+[project]
+name = "extdns"
+description = "ExtDNS synchronizes labeled records in docker-compose with DNS providers."
+authors = [
+    { name = "Dmitriy Lyalyuev", email = "dmitriy@lyalyuev.info" },
+    { name = "Leo Covarrubias", email = "leo@leocov.com" },
+]
+readme = "README.md"
+license-files = { paths=["LICENSE.md"]}
+requires-python = ">=3.12"
+dependencies = [
+    "docker>=7.1.0,<8",
+    "cloudflare>=3.1.0,<4",
+    "paramiko>=3.5.0,<4",
+    "requests>=2.32.3,<3",
+    "loguru>=0.7.2,<1",
+]
+dynamic = ["version"]
+
+[project.urls]
+"Source" = "https://github.com/leocov-dev/fork.extdns"
+
+[tool.hatch.version]
+source = "vcs"
+
+# -----------------------
+# default ---------------
+[tool.hatch.envs.default]
+path = ".venv"
+
+# -----------------------------------------------------------------------------
+# format/linting --------------------------------------------------------------
+[tool.hatch.envs.hatch-static-analysis]
+dev-mode = true
+skip-install = false
+
+[tool.hatch.envs.hatch-static-analysis.env-vars]
+MYPY_CACHE_DIR = "{root}/.mypy_cache"
+
+[tool.hatch.envs.hatch-static-analysis.scripts]
+format-check = [
+    'ruff format{env:HATCH_FMT_ARGS:} --check --diff {args:.}',
+]
+format-fix = [
+    'ruff format{env:HATCH_FMT_ARGS:} {args:.}'
+]
+lint-check = [
+    'ruff check{env:HATCH_FMT_ARGS:} {args:.}',
+    'mypy',
+]
+lint-fix = [
+    'ruff check{env:HATCH_FMT_ARGS:} --fix {args:.}',
+    'mypy',
+]
+
+# -----------------------------------------------------------------------------
+# ruff ---------------------------------------------------------------------
+[tool.ruff.lint]
+extend-ignore = [
+    "EM101",
+    "EM102",
+    "TRY003",
+    "I001",
+    "N802",
+    "FBT001",
+    "PLW0603",
+]
+
+[tool.ruff.lint.extend-per-file-ignores]
+"__init__.py" = [
+    "F401",
+    "TID252",
+]
+"__main__.py" = [
+    "T201",
+]
+"scripts/*" = [
+    "S607",
+]
+"ODC Commander.py" = [
+    "INP001",
+]
+"hatch_build.py" = [
+    "S607",
+    "S310",
+    "TRY002",
+]
+
+# ---------
+# mypy ----
+[tool.mypy]
+mypy_path = "$MYPY_CONFIG_FILE_DIR/src"
+packages = ["extdns"]
+strict = true
+implicit_reexport = true
