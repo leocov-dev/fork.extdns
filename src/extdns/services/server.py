@@ -1,15 +1,16 @@
 #!/usr/bin/env python
 
-import time
-import docker
 import os
+import time
+from collections import defaultdict
+
+import docker
 import requests
 from loguru import logger
-from modules import cf
 
 
 def legacy():
-    sleep_timeout = os.getenv('SLEEP_TIMEOUT', 300)
+    sleep_timeout = int(os.getenv('SLEEP_TIMEOUT', '300'))
 
     use_ssh_client = False
     docker_host = os.getenv('DOCKER_HOST', None)
@@ -19,23 +20,17 @@ def legacy():
     client = docker.from_env(use_ssh_client=use_ssh_client)
 
     while True:
-        ip = os.getenv('EXTERNAL_IP', None)
-        if ip is None:
-            ip = requests.get(url='https://ifconfig.me/ip', timeout=10).text
+        ip = os.getenv('EXTERNAL_IP', requests.get('https://checkip.amazonaws.com').text.strip())
+        logger.info(f'update IP: {ip}')
 
-        records_list = {}
+        records_list = defaultdict(set)
 
         for c in client.containers.list():
             for label, domain in c.labels.items():
                 if label.startswith('extdns.'):
-                    module = label.split('.')[1]
-                    if module == 'cf':
-                        if 'cf' in records_list:
-                            records_list['cf'].append(domain)
-                        else:
-                            records_list['cf'] = []
-                            records_list['cf'].append(domain)
+                    provider = label.split('.')[1]
+                    records_list[provider].add(domain)
 
-        logger.info(f'INFO: extracted domains from docker labels: {records_list}')
-        cf.update(records_list, ip)
+        logger.info(f'extracted domains from docker labels: {records_list}')
+        # cf.update(records_list, ip)
         time.sleep(sleep_timeout)
